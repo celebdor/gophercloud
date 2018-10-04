@@ -31,3 +31,7 @@ func getURL(c *gophercloud.ServiceClient, id string) string {
 func updateURL(c *gophercloud.ServiceClient, id string) string {
 	return resourceURL(c, id)
 }
+
+func addSubportsURL(c *gophercloud.ServiceClient, id string) string {
+	return c.ServiceURL(resourcePath, id, "add_subports")
+}

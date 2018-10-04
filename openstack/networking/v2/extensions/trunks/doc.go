@@ -95,5 +95,28 @@ Example of updating a Trunk
 		log.Fatal(err)
 	}
 	fmt.Printf("%+v\n", trunk)
+
+Example of adding two subports to a Trunk
+
+	trunkID := "c36e7f2e-0c53-4742-8696-aee77c9df159"
+	addSubportsOpts := trunks.AddSubportsOpts{
+		Subports: []trunks.Subport{
+			{
+				SegmentationID:   1,
+				SegmentationType: "vlan",
+				PortID:           "bf4efcc0-b1c7-4674-81f0-31f58a33420a",
+			},
+			{
+				SegmentationID:   10,
+				SegmentationType: "vlan",
+				PortID:           "2cf671b9-02b3-4121-9e85-e0af3548d112",
+			},
+		},
+	}
+	trunk, err := trunks.AddSubports(client, trunkID, addSubportsOpts).Extract()
+	if err != nil {
+		panic(err)
+	}
+	fmt.Printf("%+v\n", trunk)
 */
 package trunks

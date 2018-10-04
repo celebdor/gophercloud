@@ -193,3 +193,43 @@ func TestUpdate(t *testing.T) {
 	th.AssertEquals(t, n.AdminStateUp, iFalse)
 	th.AssertEquals(t, n.Description, description)
 }
+
+func TestAddSubports(t *testing.T) {
+	th.SetupHTTP()
+	defer th.TeardownHTTP()
+
+	th.Mux.HandleFunc("/v2.0/trunks/f6a9718c-5a64-43e3-944f-4deccad8e78c/add_subports", func(w http.ResponseWriter, r *http.Request) {
+		th.TestMethod(t, r, "PUT")
+		th.TestHeader(t, r, "X-Auth-Token", fake.TokenID)
+		th.TestHeader(t, r, "Content-Type", "application/json")
+		th.TestHeader(t, r, "Accept", "application/json")
+		th.TestJSONRequest(t, r, AddSubportsRequest)
+		w.WriteHeader(http.StatusOK)
+
+		fmt.Fprintf(w, AddSubportsResponse)
+	})
+
+	client := fake.ServiceClient()
+
+	// Try to add subports missing information
+	faultyOpts := trunks.AddSubportsOpts{
+		Subports: []trunks.Subport{
+			{PortID: "4b6baa40-8131-4212-85f9-b3636a6dc77a"},
+		},
+	}
+
+	_, err := trunks.AddSubports(client, "f6a9718c-5a64-43e3-944f-4deccad8e78c", faultyOpts).Extract()
+	if err == nil {
+		t.Fatalf("Failed to detect missing required Subport fields")
+	}
+
+	opts := trunks.AddSubportsOpts{
+		Subports: ExpectedSubports,
+	}
+
+	trunk, err := trunks.AddSubports(client, "f6a9718c-5a64-43e3-944f-4deccad8e78c", opts).Extract()
+	th.AssertNoErr(t, err)
+	expectedTrunk, err := ExpectedSubportsAddedTrunk()
+	th.AssertNoErr(t, err)
+	th.CheckDeepEquals(t, &expectedTrunk, trunk)
+}

@@ -134,3 +134,39 @@ func Update(c *gophercloud.ServiceClient, id string, opts UpdateOptsBuilder) (r 
 	})
 	return
 }
+
+type AddSubportsOpts struct {
+	Subports []Subport `json:"sub_ports" required:"true"`
+}
+
+type AddSubportsOptsBuilder interface {
+	ToTrunkAddSubportsMap() (map[string]interface{}, error)
+}
+
+func (opts AddSubportsOpts) ToTrunkAddSubportsMap() (body map[string]interface{}, err error) {
+	body = make(map[string]interface{})
+
+	// Process Subport structs individually to enforce required field check
+	subPorts := make([]interface{}, len(opts.Subports))
+	for id, subport := range opts.Subports {
+		subBody, err := gophercloud.BuildRequestBody(subport, "")
+		if err != nil {
+			return subBody, err
+		}
+		subPorts[id] = subBody
+	}
+	body["sub_ports"] = subPorts
+	return
+}
+
+func AddSubports(c *gophercloud.ServiceClient, id string, opts AddSubportsOptsBuilder) (r UpdateSubportsResult) {
+	body, err := opts.ToTrunkAddSubportsMap()
+	if err != nil {
+		r.Err = err
+		return
+	}
+	_, r.Err = c.Put(addSubportsURL(c, id), body, &r.Body, &gophercloud.RequestOpts{
+		OkCodes: []int{200},
+	})
+	return
+}

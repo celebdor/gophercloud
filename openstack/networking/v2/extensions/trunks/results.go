@@ -8,9 +8,9 @@ import (
 )
 
 type Subport struct {
-	SegmentationID   int    `json:"segmentation_id"`
-	SegmentationType string `json:"segmentation_type"`
-	PortID           string `json:"port_id"`
+	SegmentationID   int    `json:"segmentation_id" required:"true"`
+	SegmentationType string `json:"segmentation_type" required:"true"`
+	PortID           string `json:"port_id" required:"true"`
 }
 
 type commonResult struct {
@@ -38,6 +38,12 @@ type GetResult struct {
 // UpdateResult is the result of an Update request. Call its Extract method to
 // interpret it as a Trunk.
 type UpdateResult struct {
+	commonResult
+}
+
+// UpdateSubportsResult is the result of either an AddSubports or a RemoveSubports
+// request. Call its Extract method to interpret it as a Trunk.
+type UpdateSubportsResult struct {
 	commonResult
 }
 
@@ -109,4 +115,9 @@ func ExtractTrunks(page pagination.Page) ([]Trunk, error) {
 	}
 	err := (page.(TrunkPage)).ExtractInto(&a)
 	return a.Trunks, err
+}
+
+func (r UpdateSubportsResult) Extract() (t *Trunk, err error) {
+	err = r.ExtractInto(&t)
+	return
 }
