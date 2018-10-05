@@ -157,33 +157,79 @@ type AddSubportsOpts struct {
 	Subports []Subport `json:"sub_ports" required:"true"`
 }
 
-type AddSubportsOptsBuilder interface {
-	ToTrunkAddSubportsMap() (map[string]interface{}, error)
+type UpdateSubportsOptsBuilder interface {
+	ToTrunkUpdateSubportsMap() (map[string]interface{}, error)
+	subports() []interface{}
 }
 
-func (opts AddSubportsOpts) ToTrunkAddSubportsMap() (body map[string]interface{}, err error) {
+func toTrunkUpdateSubportMap(opts UpdateSubportsOptsBuilder) (body map[string]interface{}, err error) {
 	body = make(map[string]interface{})
 
 	// Process Subport structs individually to enforce required field check
-	subPorts := make([]interface{}, len(opts.Subports))
-	for id, subport := range opts.Subports {
+	subports := opts.subports()
+	subportsQuery := make([]interface{}, len(subports))
+	for id, subport := range subports {
 		subBody, err := gophercloud.BuildRequestBody(subport, "")
 		if err != nil {
 			return subBody, err
 		}
-		subPorts[id] = subBody
+		subportsQuery[id] = subBody
 	}
-	body["sub_ports"] = subPorts
+	body["sub_ports"] = subportsQuery
 	return
 }
 
-func AddSubports(c *gophercloud.ServiceClient, id string, opts AddSubportsOptsBuilder) (r UpdateSubportsResult) {
-	body, err := opts.ToTrunkAddSubportsMap()
+func (opts AddSubportsOpts) ToTrunkUpdateSubportsMap() (map[string]interface{}, error) {
+	return toTrunkUpdateSubportMap(opts)
+}
+
+func (opts AddSubportsOpts) subports() (subports []interface{}) {
+	subports = make([]interface{}, len(opts.Subports))
+	for i, subport := range opts.Subports {
+		subports[i] = subport
+	}
+	return
+}
+
+func AddSubports(c *gophercloud.ServiceClient, id string, opts UpdateSubportsOptsBuilder) (r UpdateSubportsResult) {
+	body, err := opts.ToTrunkUpdateSubportsMap()
 	if err != nil {
 		r.Err = err
 		return
 	}
 	_, r.Err = c.Put(addSubportsURL(c, id), body, &r.Body, &gophercloud.RequestOpts{
+		OkCodes: []int{200},
+	})
+	return
+}
+
+type RemoveSubport struct {
+	PortID string `json:"port_id" required:"true"`
+}
+
+type RemoveSubportsOpts struct {
+	Subports []RemoveSubport `json:"sub_ports"`
+}
+
+func (opts RemoveSubportsOpts) ToTrunkUpdateSubportsMap() (map[string]interface{}, error) {
+	return toTrunkUpdateSubportMap(opts)
+}
+
+func (opts RemoveSubportsOpts) subports() (subports []interface{}) {
+	subports = make([]interface{}, len(opts.Subports))
+	for i, subport := range opts.Subports {
+		subports[i] = subport
+	}
+	return
+}
+
+func RemoveSubports(c *gophercloud.ServiceClient, id string, opts UpdateSubportsOptsBuilder) (r UpdateSubportsResult) {
+	body, err := opts.ToTrunkUpdateSubportsMap()
+	if err != nil {
+		r.Err = err
+		return
+	}
+	_, r.Err = c.Put(removeSubportsURL(c, id), body, &r.Body, &gophercloud.RequestOpts{
 		OkCodes: []int{200},
 	})
 	return
