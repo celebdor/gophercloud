@@ -23,11 +23,29 @@ type CreateOpts struct {
 }
 
 // ToTrunkCreateMap builds a request body from CreateOpts.
-func (opts CreateOpts) ToTrunkCreateMap() (map[string]interface{}, error) {
+func (opts CreateOpts) ToTrunkCreateMap() (body map[string]interface{}, err error) {
 	if opts.Subports == nil {
 		opts.Subports = []Subport{}
+		return gophercloud.BuildRequestBody(opts, "trunk")
 	}
-	return gophercloud.BuildRequestBody(opts, "trunk")
+
+	body, err = gophercloud.BuildRequestBody(opts, "trunk")
+	if err != nil {
+		return
+	}
+
+	trunk := body["trunk"].(map[string]interface{})
+	// Process Subports separately to enforce its required fields
+	subPorts := make([]interface{}, len(opts.Subports))
+	for id, subport := range opts.Subports {
+		subBody, err := gophercloud.BuildRequestBody(subport, "")
+		if err != nil {
+			return subBody, err
+		}
+		subPorts[id] = subBody
+	}
+	trunk["sub_ports"] = subPorts
+	return
 }
 
 func Create(c *gophercloud.ServiceClient, opts CreateOptsBuilder) (r CreateResult) {

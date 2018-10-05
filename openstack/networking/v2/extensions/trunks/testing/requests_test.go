@@ -45,11 +45,22 @@ func TestCreate(t *testing.T) {
 			},
 		},
 	}
+
 	_, err := trunks.Create(fake.ServiceClient(), options).Extract()
 	if err == nil {
 		t.Fatalf("Failed to detect missing parent PortID field")
 	}
 	options.PortID = "c373d2fa-3d3b-4492-924c-aff54dea19b6"
+
+	// Test malformed subport detection
+	options.Subports = append(options.Subports, trunks.Subport{PortID: "edfe3bca-7dcc-4b7a-a784-fac91cf62c31"})
+
+	_, err = trunks.Create(fake.ServiceClient(), options).Extract()
+	if err == nil {
+		t.Fatalf("Failed to detect missing subport fields")
+	}
+	options.Subports = options.Subports[:2]
+
 	n, err := trunks.Create(fake.ServiceClient(), options).Extract()
 	th.AssertNoErr(t, err)
 
