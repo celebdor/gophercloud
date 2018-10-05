@@ -26,26 +26,8 @@ type CreateOpts struct {
 func (opts CreateOpts) ToTrunkCreateMap() (body map[string]interface{}, err error) {
 	if opts.Subports == nil {
 		opts.Subports = []Subport{}
-		return gophercloud.BuildRequestBody(opts, "trunk")
 	}
-
-	body, err = gophercloud.BuildRequestBody(opts, "trunk")
-	if err != nil {
-		return
-	}
-
-	trunk := body["trunk"].(map[string]interface{})
-	// Process Subports separately to enforce its required fields
-	subPorts := make([]interface{}, len(opts.Subports))
-	for id, subport := range opts.Subports {
-		subBody, err := gophercloud.BuildRequestBody(subport, "")
-		if err != nil {
-			return subBody, err
-		}
-		subPorts[id] = subBody
-	}
-	trunk["sub_ports"] = subPorts
-	return
+	return gophercloud.BuildRequestBody(opts, "trunk")
 }
 
 func Create(c *gophercloud.ServiceClient, opts CreateOptsBuilder) (r CreateResult) {
@@ -163,20 +145,7 @@ type UpdateSubportsOptsBuilder interface {
 }
 
 func toTrunkUpdateSubportMap(opts UpdateSubportsOptsBuilder) (body map[string]interface{}, err error) {
-	body = make(map[string]interface{})
-
-	// Process Subport structs individually to enforce required field check
-	subports := opts.subports()
-	subportsQuery := make([]interface{}, len(subports))
-	for id, subport := range subports {
-		subBody, err := gophercloud.BuildRequestBody(subport, "")
-		if err != nil {
-			return subBody, err
-		}
-		subportsQuery[id] = subBody
-	}
-	body["sub_ports"] = subportsQuery
-	return
+	return gophercloud.BuildRequestBody(opts, "")
 }
 
 func (opts AddSubportsOpts) ToTrunkUpdateSubportsMap() (map[string]interface{}, error) {
